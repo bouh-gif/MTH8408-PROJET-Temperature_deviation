@@ -1,12 +1,14 @@
-# # Uncomment this section the first time running the program
-# using Pkg
-# Pkg.add("ADNLPModels")
-# Pkg.add("NLPModels")
-# Pkg.add("LinearAlgebra")
-# Pkg.add("NLPModelsIpopt")
-# Pkg.add("HTTP")
-# Pkg.add("CSV")
-# Pkg.add("DataFrames")
+# Uncomment this section the first time running the program
+using Pkg
+Pkg.add("ADNLPModels")
+Pkg.add("NLPModels")
+Pkg.add("LinearAlgebra")
+Pkg.add("NLPModelsIpopt")
+Pkg.add("HTTP")
+Pkg.add("CSV")
+Pkg.add("DataFrames")
+Pkg.add("CSV")
+Pkg.add("Dates")
 
 
 using LinearAlgebra
@@ -16,6 +18,8 @@ using NLPModelsIpopt
 using HTTP
 using CSV
 using DataFrames
+using CSV
+using Dates
 
 
 #**********************************************************************************************************************
@@ -52,6 +56,41 @@ dates_vector = data_matrix[:, 1]
 temperatures_vector = data_matrix[:, 2]
 
 b = temperatures_vector # temperature vector
+
+# Imnport des données de Montréal
+# Chemins des fichiers CSV
+file_paths = ["climate-daily1.csv", "climate-daily2.csv", "climate-daily3.csv"]
+
+# Initialisation des vecteurs de température et de date
+temperatures_mtl = Float64[]
+dates_mtl = Vector{String}()
+
+# Parcourir chaque fichier CSV
+for file_path in file_paths
+    # Charger le fichier CSV dans un DataFrame Julia
+    df = CSV.read(file_path, DataFrame)
+
+    # Extraire les colonnes de température et de date
+    temperature_column = df[:, "MEAN_TEMPERATURE"]
+    date_column = df[:, "LOCAL_DATE"]
+
+    # Filtrer les valeurs manquantes dans les colonnes de température et de date
+    non_missing_indices = .!ismissing.(temperature_column) .& .!ismissing.(date_column)
+    temperature_column_filtered = temperature_column[non_missing_indices]
+    date_column_filtered = date_column[non_missing_indices]
+
+    # Ajouter les valeurs aux vecteurs respectifs
+    append!(temperatures_mtl, temperature_column_filtered)
+    append!(dates_mtl, date_column_filtered)
+end
+
+# Formater les dates au format yyyymmdd
+dates_mtl = Dates.format.(Date.(dates_mtl, "yyyy-mm-dd HH:MM:SS"), "yyyymmdd")
+
+# Afficher les 10 premières valeurs des vecteurs (pour vérification)
+println("10 premieres températures Montréal :", temperatures_mtl[1:10])
+println("10 premieres dates Montréal :", dates_mtl[1:10])
+
 
 #**********************************************************************************************************************
 

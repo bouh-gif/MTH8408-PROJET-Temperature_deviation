@@ -1,36 +1,51 @@
 import Pkg
-# Pkg.add("HTTP")
-# Pkg.add("CSV")
-# Pkg.add("DataFrames")
+Pkg.add("HTTP")
+Pkg.add("CSV")
+Pkg.add("DataFrames")
+Pkg.add("CSV")
+Pkg.add("Dates")
 
 using HTTP
 using CSV
 using DataFrames
+using CSV
+using Dates
 
-# URL of the data file
-url = "https://vanderbei.princeton.edu/ampl/nlmodels/LocalWarming/McGuireAFB/data/McGuireAFB.dat"
+# Chemins des fichiers CSV
+file_paths = ["climate-daily1.csv", "climate-daily2.csv", "climate-daily3.csv"]
 
-# Download data from the URL
-response = HTTP.get(url)
-data = String(response.body)
+# Initialisation des vecteurs de température et de date
+temperatures = Float64[]
+dates = Vector{String}()
 
-# Parse the data into a DataFrame
-df = CSV.File(IOBuffer(data), delim=' ', header=false, ignorerepeated=true) |> DataFrame
+# Parcourir chaque fichier CSV
+for file_path in file_paths
+    # Charger le fichier CSV dans un DataFrame Julia
+    df = CSV.read(file_path, DataFrame)
 
-# Extract date and temperature columns
-dates = df[!, 1]
-temperatures = df[!, 2]
+    # Extraire les colonnes de température et de date
+    temperature_column = df[:, "MEAN_TEMPERATURE"]
+    date_column = df[:, "LOCAL_DATE"]
 
-# Create a matrix with date and temperature
-data_matrix = hcat(dates, temperatures)
+    # Filtrer les valeurs manquantes dans les colonnes de température et de date
+    non_missing_indices = .!ismissing.(temperature_column) .& .!ismissing.(date_column)
+    temperature_column_filtered = temperature_column[non_missing_indices]
+    date_column_filtered = date_column[non_missing_indices]
 
-# # Print the matrix
-# println(data_matrix)
+    # Ajouter les valeurs aux vecteurs respectifs
+    append!(temperatures, temperature_column_filtered)
+    append!(dates, date_column_filtered)
+end
 
-# Extract dates and temperatures vectors
-dates_vector = data_matrix[:, 1]
-temperatures_vector = data_matrix[:, 2]
+# Formater les dates au format yyyymmdd
+dates = Dates.format.(Date.(dates, "yyyy-mm-dd HH:MM:SS"), "yyyymmdd")
 
-# Print the vectors
-println("Dates: ", dates_vector)
-println("Temperatures: ", temperatures_vector)
+# Afficher les 10 premières valeurs des vecteurs (pour vérification)
+println("Températures :", temperatures[1:10])
+println("Dates :", dates[1:10])
+# Afficher les 10 dernières valeurs des vecteurs
+println("Dix dernières températures :", temperatures[end-9:end])
+println("Dix dernières dates :", dates[end-9:end])
+# Afficher la longueur des vecteurs
+println("Nombre total de températures :", length(temperatures))
+println("Nombre total de dates :", length(dates))
