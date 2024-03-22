@@ -63,7 +63,6 @@ temperatures_vector = data_matrix[:, 2]
 b = temperatures_vector # temperature vector
 
 #**********************************************************************************************************************
-
 r = 6
 n = length(b)
 
@@ -84,15 +83,15 @@ F(x) = A*x-b        # residual function
 f(x) = (1/2)*norm(A*x-b)^2          # Fonction
 x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
 
-# Modèle ADNLP et résolution ipopt
-nlps_lsquare = ADNLSModel(F, x0, n)
-stats_p = ipopt(nlps_lsquare)
-print(stats_p.solution)
-
 # Modèle ADNLS et résolution ipopt
-nlpp_lsquare = ADNLPModel(f, x0)
-stats_s = ipopt(nlpp_lsquare)
+nlps_lsquare = ADNLSModel(F, x0, n)
+stats_s = ipopt(nlps_lsquare)
 print(stats_s.solution)
+
+# Modèle ADNLP et résolution ipopt
+nlpp_lsquare = ADNLPModel(f, x0)
+stats_p = ipopt(nlpp_lsquare)
+print(stats_p.solution)
 
 #**********************************************************************************************************************
 # Représentation graphique des données de température vs les courbes obtenues
@@ -110,45 +109,113 @@ y_ls = ones(n,1)
 for i in 1:n
     y_ls[i,1] = ls_mod(x[i])
 end
-plot(x, b, label="Données",ylabel="Température", xlabel="Jour")
-#plot!(x[10000:12000], y_lp[10000:12000], label="Modèle ADNLP")
-plot!(x, y_ls, label="Modèle ADNLS")
+plot(x[19000:20000], b[19000:20000], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
+plot!(x[19000:20000], y_lp[19000:20000], label="Modèle ADNLP", linecolor="red")
+plot!(x[19000:20000], y_ls[19000:20000], label="Modèle ADNLS", linecolor="blue")
 #**********************************************************************************************************************
-print("\n")
-result_ipopt = [stats_p.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_p.elapsed_time]
-print(result_ipopt)
-print("\n")
+# Résultats du modèle NLP avec d'autres solveurs et printing des performances
+print("NLP Model results\n")
+print("Performances ipopt\n")
+resultP_ipopt = [stats_p.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_p.elapsed_time]
+print(resultP_ipopt)
 
-stats_lbfgs = lbfgs(nlpp_lsquare)
-print(stats_lbfgs.solution)
-print("\n")
-result_lbfgs = [stats_lbfgs.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_lbfgs.elapsed_time]
-print(result_lbfgs)
-print("\n")
+print("\nSolution lbfgs\n")
+statsP_lbfgs = lbfgs(nlpp_lsquare)
+print(statsP_lbfgs.solution)
+print("\nPeformances lbfgs\n")
+resultP_lbfgs = [statsP_lbfgs.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; statsP_lbfgs.elapsed_time]
+print(resultP_lbfgs)
 
-stats_tron = tron(nlpp_lsquare)
-print(stats_tron.solution)
-print("\n")
-result_tron = [stats_tron.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_tron.elapsed_time]
-print(result_tron)
-print("\n")
+print("\nSolution tron\n")
+statsP_tron = tron(nlpp_lsquare)
+print(statsP_tron.solution)
+print("\nPeformances tron\n")
+resultP_tron = [statsP_tron.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; statsP_tron.elapsed_time]
+print(resultP_tron)
 
-stats_trunk = trunk(nlpp_lsquare)
-print(stats_trunk.solution)
-print("\n")
-result_trunk = [stats_trunk.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_trunk.elapsed_time]
-print(result_trunk)
-print("\n")
+print("\nSolution trunk\n")
+statsP_trunk = trunk(nlpp_lsquare)
+print(statsP_trunk.solution)
+print("\nPeformances trunk\n")
+resultP_trunk = [statsP_trunk.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; statsP_trunk.elapsed_time]
+print(resultP_trunk)
 
-stats_R2 = R2(nlpp_lsquare)
-print(stats_R2.solution)
-print("\n")
-result_R2 = [stats_R2.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; stats_R2.elapsed_time]
-print(result_R2)
-print("\n")
+print("\nSolution R2\n")
+statsP_R2 = R2(nlpp_lsquare)
+print(statsP_R2.solution)
+print("\nPeformances R2\n")
+resultP_R2 = [statsP_R2.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; statsP_R2.elapsed_time]
+print(resultP_R2)
+print(statsP_R2.status)
+
+#**********************************************************************************************************************
+# Résultats du modèle NLS avec d'autres solveurs et printing des performances
+print("\nNLS Model results\n")
+print("\nPerformances ipopt\n")
+resultS_ipopt = [stats_s.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsquare.counters.neval_grad ; nlps_lsquare.counters.neval_hess ; stats_s.elapsed_time]
+print(resultS_ipopt)
+
+print("\nSolution tron\n")
+statsS_tron = tron(nlps_lsquare)
+print(statsS_tron.solution)
+print("\nPerformances tron\n")
+resultS_tron = [statsS_tron.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsquare.counters.neval_grad ; nlps_lsquare.counters.neval_hess ; statsS_tron.elapsed_time]
+print(resultS_tron)
+
+print("\nSolution trunk\n")
+statsS_trunk = trunk(nlps_lsquare)
+print(statsS_trunk.solution)
+print("\nPerformances trunk\n")
+resultS_trunk = [statsS_trunk.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsquare.counters.neval_grad ; nlps_lsquare.counters.neval_hess ; statsS_trunk.elapsed_time]
+print(resultS_trunk)
+print(statsP_R2.status)
 
 
-# print(stats_lbfgs.solution)
-# print(stats_tron.solution)
-# print(stats_trunk.solution)
-# print(stats_R2.solution)
+
+#**********************************************************************************************************************
+# MODÈLES AVEC DONNÉES "RÉDUITES"
+
+# Résolution du modèle en utilisant seulement les 10 000 premières mesures de température
+m = 2000
+A = ones(m,r)
+for i in 1:m
+    A[i,2] = i
+    A[i,3] = cos(2*pi*i/(365.25))
+    A[i,4] = sin(2*pi*i/(365.25)) 
+    A[i,5] = cos(2*pi*i/(10.7*365.25))
+    A[i,6] = sin(2*pi*i/(10.7*365.25))
+end
+
+# Déclaration des fonctions des problèmes ADNLP et ADNLS
+F(x) = A*x-b[1:m]        # residual function
+f(x) = (1/2)*norm(A*x-b[1:m])^2          # Fonction
+x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
+
+# Modèle ADNLS et résolution ipopt
+nlps_red = ADNLSModel(F, x0, m)
+stats_sred = ipopt(nlps_red)
+print(stats_sred.solution)
+
+# Modèle ADNLP et résolution ipopt
+nlpp_red = ADNLPModel(f, x0)
+stats_pred = ipopt(nlpp_red)
+print(stats_pred.solution)
+
+# Représentation graphique des données de température vs les courbes obtenues
+x = ones(n,1)
+for i in 1:n
+    x[i,1] = i
+end
+lpr_mod = solution(stats_pred.solution)
+y_lpr = ones(n,1)
+for i in 1:n
+    y_lpr[i,1] = lpr_mod(x[i])
+end
+lsr_mod = solution(stats_sred.solution)
+y_lsr = ones(n,1)
+for i in 1:n
+    y_lsr[i,1] = lsr_mod(x[i])
+end
+plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
+plot!(x, y_lpr, label="Modèle ADNLP", linecolor="red")
+plot!(x, y_lsr, label="Modèle ADNLS", linecolor="blue")
