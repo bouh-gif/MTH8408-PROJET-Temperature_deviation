@@ -60,7 +60,43 @@ data_matrix = hcat(dates, temperatures)
 dates_vector = data_matrix[:, 1]
 temperatures_vector = data_matrix[:, 2]
 
-b = temperatures_vector # temperature vector
+
+# Imnport des données de Montréal
+# Chemins des fichiers CSV
+file_paths = ["climate-daily1.csv", "climate-daily2.csv", "climate-daily3.csv"]
+
+# Initialisation des vecteurs de température et de date
+temperatures_mtl = Float64[]
+dates_mtl = Vector{String}()
+
+# Parcourir chaque fichier CSV
+for file_path in file_paths
+    # Charger le fichier CSV dans un DataFrame Julia
+    df = CSV.read(file_path, DataFrame)
+
+    # Extraire les colonnes de température et de date
+    temperature_column = df[:, "MEAN_TEMPERATURE"]
+    date_column = df[:, "LOCAL_DATE"]
+
+    # Filtrer les valeurs manquantes dans les colonnes de température et de date
+    non_missing_indices = .!ismissing.(temperature_column) .& .!ismissing.(date_column)
+    temperature_column_filtered = temperature_column[non_missing_indices]
+    date_column_filtered = date_column[non_missing_indices]
+
+    # Ajouter les valeurs aux vecteurs respectifs
+    append!(temperatures_mtl, temperature_column_filtered)
+    append!(dates_mtl, date_column_filtered)
+end
+
+# Formater les dates au format yyyymmdd
+dates_mtl = Dates.format.(Date.(dates_mtl, "yyyy-mm-dd HH:MM:SS"), "yyyymmdd")
+
+# Afficher les 10 premières valeurs des vecteurs (pour vérification)
+println("10 premieres températures Montréal :", temperatures_mtl[1:10])
+println("10 premieres dates Montréal :", dates_mtl[1:10])
+
+b = temperatures_mtl # temperature vector
+
 
 #**********************************************************************************************************************
 r = 6
@@ -110,13 +146,21 @@ for i in 1:n
     y_ls[i,1] = ls_mod(x[i])
 end
 
-start_plot = 19000
-end_plot = 20000
+
+plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
+plot!(x, y_lp, label="Modèle ADNLP", linecolor="red")
+plot!(x, y_ls, label="Modèle ADNLS", linecolor="blue")
+savefig("two_models_alldays_MTL.svg")
+savefig("two_models_alldays_MTL.png")
+
+
+start_plot = 10000
+end_plot = 12000
 plot(x[start_plot:end_plot], b[start_plot:end_plot], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x[start_plot:end_plot], y_lp[start_plot:end_plot], label="Modèle ADNLP", linecolor="red")
 plot!(x[start_plot:end_plot], y_ls[start_plot:end_plot], label="Modèle ADNLS", linecolor="blue")
-savefig("two_models_day$(start_plot)_to_day$(end_plot).svg")
-savefig("two_models_day$(start_plot)_to_day$(end_plot).png")
+savefig("two_models_day$(start_plot)_to_day$(end_plot)_MTL.svg")
+savefig("two_models_day$(start_plot)_to_day$(end_plot)_MTL.png")
 
 
 
@@ -226,13 +270,13 @@ for i in 1:n
 end
 plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x, y_lpr, label="Modèle ADNLP", linecolor="red")
-savefig("graph_donnees-vs-lpmodel.svg")
-savefig("graph_donnees-vs-lpmodel.png")
+savefig("graph_donnees-vs-lpmodel_reduced_all_days_MTL.svg")
+savefig("graph_donnees-vs-lpmodel_reduced_all_days_MTL.png")
 
 plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x, y_lsr, label="Modèle ADNLS", linecolor="blue")
-savefig("graph_donnees-vs-lsmodel.svg")
-savefig("graph_donnees-vs-lsmodel.png")
+savefig("graph_donnees-vs-lsmodel_reduced_all_days_MTL.svg")
+savefig("graph_donnees-vs-lsmodel_reduced_all_days_MTL.png")
 
 
 
@@ -241,6 +285,6 @@ savefig("graph_donnees-vs-lsmodel.png")
 plot(x[19000:20000], b[19000:20000], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x[19000:20000], y_lpr[19000:20000], label="Modèle ADNLP", linecolor="red")
 plot!(x[19000:20000], y_lsr[19000:20000], label="Modèle ADNLS", linecolor="blue")
-savefig("from_$m.svg")
-savefig("from_$m.png")
+savefig("from_$(m)_MTL.svg")
+savefig("from_$(m)_MTL.png")
 
