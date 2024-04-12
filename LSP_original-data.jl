@@ -12,6 +12,7 @@ using Pkg
 # Pkg.add("JSOSolvers")
 # Pkg.add("SolverBenchmark")
 # Pkg.add("Plots")
+# Pkg.add("Percival")
 
 using LinearAlgebra
 using ADNLPModels
@@ -25,6 +26,7 @@ using CSV
 using Dates
 using SolverBenchmark
 using Plots
+using Percival
 
 
 #**********************************************************************************************************************
@@ -89,9 +91,9 @@ stats_s = ipopt(nlps_lsquare)
 print(stats_s.solution)
 
 # Modèle ADNLP et résolution ipopt
-nlpp_lsquare = ADNLPModel(f, x0)
-stats_p = ipopt(nlpp_lsquare)
-print(stats_p.solution)
+# nlpp_lsquare = ADNLPModel(f, x0)
+# stats_p = ipopt(nlpp_lsquare)
+# print(stats_p.solution)
 
 #**********************************************************************************************************************
 # Représentation graphique des données de température vs les courbes obtenues
@@ -121,8 +123,8 @@ for i in 1:n
     y_ls[i,1] = ls_mod(x[i])
 end
 
-start_plot = 10000
-end_plot = 10500
+start_plot = 1
+end_plot = n
 plot(x[start_plot:end_plot], b[start_plot:end_plot], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x[start_plot:end_plot], y_lp[start_plot:end_plot], label="Modèle ADNLP", linecolor="red")
 plot!(x[start_plot:end_plot], y_ls[start_plot:end_plot], label="Modèle ADNLS", linecolor="blue")
@@ -192,16 +194,30 @@ for i in 1:n
     y_lp_R2[i,1] = lp_R2(x[i])
 end
 
+print("\nSolution percival\n")
+statsP_perci = percival(nlpp_lsquare)
+print(statsP_perci.solution)
+print("\nPeformances percival\n")
+resultP_perci = [statsP_perci.iter ; nlpp_lsquare.counters.neval_obj ; nlpp_lsquare.counters.neval_grad ; nlpp_lsquare.counters.neval_hess ; statsP_perci.elapsed_time]
+print(resultP_perci)
+
+lp_perci = solution(statsP_perci.solution)
+y_lp_perci = ones(n,1)
+for i in 1:n
+    y_lp_perci[i,1] = lp_perci(x[i])
+end
+
 # REPRÉSENTATION GRAPHIQUE
 
 start_plot = 10000
-end_plot = 20000
+end_plot = 10500
 plot(x[start_plot:end_plot], b[start_plot:end_plot], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x[start_plot:end_plot], y_lp[start_plot:end_plot], label="Ipopt", linecolor="red")
 plot!(x[start_plot:end_plot], y_lp_lbfgs[start_plot:end_plot], label="Lbfgs", linecolor="blue")
 plot!(x[start_plot:end_plot], y_lp_tron[start_plot:end_plot], label="Tron", linecolor="green")
 plot!(x[start_plot:end_plot], y_lp_trunk[start_plot:end_plot], label="Trunk", linecolor="yellow")
 plot!(x[start_plot:end_plot], y_lp_R2[start_plot:end_plot], label="R2", linecolor="fuchsia")
+plot!(x[start_plot:end_plot], y_lp_perci[start_plot:end_plot], label="Percival", linecolor="orange")
 # savefig("two_models_day$(start_plot)_to_day$(end_plot).svg")
  savefig("solvers_$(start_plot)_to_day$(end_plot).png")
 
@@ -220,6 +236,12 @@ print("\nPerformances tron\n")
 resultS_tron = [statsS_tron.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsquare.counters.neval_grad ; nlps_lsquare.counters.neval_hess ; statsS_tron.elapsed_time]
 print(resultS_tron)
 
+ls_tron = solution(statsS_tron.solution)
+y_ls_tron = ones(n,1)
+for i in 1:n
+    y_ls_tron[i,1] = ls_tron(x[i])
+end
+
 print("\nSolution trunk\n")
 statsS_trunk = trunk(nlps_lsquare)
 print(statsS_trunk.solution)
@@ -228,62 +250,85 @@ resultS_trunk = [statsS_trunk.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsqu
 print(resultS_trunk)
 print(statsP_R2.status)
 
+ls_trunk = solution(statsS_trunk.solution)
+y_ls_trunk = ones(n,1)
+for i in 1:n
+    y_ls_trunk[i,1] = ls_trunk(x[i])
+end
+
+print("\nSolution percival\n")
+statsS_perci = percival(nlps_lsquare)
+print(statsS_perci.solution)
+print("\nPeformances percival\n")
+resultS_perci = [statsS_perci.iter ; nlps_lsquare.counters.neval_obj ; nlps_lsquare.counters.neval_grad ; nlps_lsquare.counters.neval_hess ; statsS_perci.elapsed_time]
+print(resultS_perci)
+
+ls_perci = solution(statsS_perci.solution)
+y_ls_perci = ones(n,1)
+for i in 1:n
+    y_ls_perci[i,1] = ls_perci(x[i])
+end
+
+start_plot = 10000
+end_plot = 10500
+plot(x[start_plot:end_plot], b[start_plot:end_plot], label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
+plot!(x[start_plot:end_plot], y_ls[start_plot:end_plot], label="Ipopt", linecolor="red")
+plot!(x[start_plot:end_plot], y_ls_tron[start_plot:end_plot], label="Tron", linecolor="green")
+plot!(x[start_plot:end_plot], y_ls_trunk[start_plot:end_plot], label="Trunk", linecolor="yellow")
+plot!(x[start_plot:end_plot], y_ls_perci[start_plot:end_plot], label="Percival", linecolor="orange")
+# savefig("two_models_day$(start_plot)_to_day$(end_plot).svg")
+ savefig("solvers_ls_$(start_plot)_to_day$(end_plot).png")
 
 
 #**********************************************************************************************************************
 # MODÈLES AVEC DONNÉES "RÉDUITES"
 
-# Résolution du modèle en utilisant seulement les 10 000 premières mesures de température
-m = 10000
-A = ones(m,r)
-for i in 1:m
-    A[i,2] = i
-    A[i,3] = cos(2*pi*i/(365.25))
-    A[i,4] = sin(2*pi*i/(365.25)) 
-    A[i,5] = cos(2*pi*i/(10.7*365.25))
-    A[i,6] = sin(2*pi*i/(10.7*365.25))
+# Déclaration des vecteurs initiaux
+
+sol1 = []
+sol2 = []
+val = 2000
+m = [val]
+#81
+for i in 1:33
+    val = val+250
+    push!(m, val)
 end
 
-# Déclaration des fonctions des problèmes ADNLP et ADNLS
-F(x) = A*x-b[1:m]        # residual function
-f(x) = (1/2)*norm(A*x-b[1:m])^2          # Fonction
-x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
+for k in m
+    A = ones(k,r)
+    for i in 1:k
+        A[i,2] = i
+        A[i,3] = cos(2*pi*i/(365.25))
+        A[i,4] = sin(2*pi*i/(365.25))
+        A[i,5] = cos(2*pi*i/(10.7*365.25))
+        A[i,6] = sin(2*pi*i/(10.7*365.25))
+    end
 
-# Modèle ADNLS et résolution ipopt
-nlps_red = ADNLSModel(F, x0, m)
-stats_sred = ipopt(nlps_red)
-print(stats_sred.solution)
+    # Déclaration des fonctions des problèmes ADNLP et ADNLS
+    F(x) = A*x-b[1:k]        # residual function
+    x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
 
-# Modèle ADNLP et résolution ipopt
-nlpp_red = ADNLPModel(f, x0)
-stats_pred = ipopt(nlpp_red)
-print(stats_pred.solution)
+    # Modèle ADNLS et résolution ipopt
+    nlps_red = ADNLSModel(F, x0, k)
+    stats_sred = ipopt(nlps_red, print_level = 0)
+
+    push!(sol1, stats_sred.solution[1])
+    push!(sol2, stats_sred.solution[2])
+
+end
 
 # Représentation graphique des données de température vs les courbes obtenues
-x = ones(n,1)
-for i in 1:n
-    x[i,1] = i
-end
-lpr_mod = solution(stats_pred.solution)
-y_lpr = ones(n,1)
-for i in 1:n
-    y_lpr[i,1] = lpr_mod(x[i])
-end
-lsr_mod = solution(stats_sred.solution)
-y_lsr = ones(n,1)
-for i in 1:n
-    y_lsr[i,1] = lsr_mod(x[i])
-end
-plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
-plot!(x, y_lpr, label="Modèle ADNLP", linecolor="red")
-savefig("graph_donnees-vs-lpmodel.svg")
-savefig("graph_donnees-vs-lpmodel.png")
+plot(m, sol1, ylabel="Valeur de x0", xlabel="Nombre de données utilisé", linecolor="red", ylims=(minimum(sol1),maximum(sol1)))
+savefig("donnees-red_x0.png")
+plot(m, sol2, ylabel="Valeur de x1", xlabel="Nombre de données utilisé", linecolor="blue", ylims=(minimum(sol2),maximum(sol2)))
+savefig("donnees-red_x1.png")
+
 
 plot(x, b, label="Données",ylabel="Température", xlabel="Jour", linecolor="lightgrey")
 plot!(x, y_lsr, label="Modèle ADNLS", linecolor="blue")
 savefig("graph_donnees-vs-lsmodel.svg")
 savefig("graph_donnees-vs-lsmodel.png")
-
 
 
 
