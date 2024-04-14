@@ -116,7 +116,7 @@ end
 #**********************************************************************************************************************
 # Déclaration des fonctions des problèmes ADNLP et ADNLS
 F(x) = A*x-b        # residual function
-f(x) = sum(A*x-b)         # Fonction
+f(x) = sum(abs.(A*x-b))         # Fonction
 x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
 
 # Modèle ADNLS et résolution ipopt
@@ -240,17 +240,18 @@ end
 
 # Déclaration des fonctions des problèmes ADNLP et ADNLS
 F(x) = A*x-b[1:m]        # residual function
-f(x) = (1/2)*norm(A*x-b[1:m])^2          # Fonction
+f(x) = sum(abs.(A*x-b[1:m]))         # Fonction
 x0 = [0.1; 0.1; 0.1; 0.1; 0.1; 0.1] # first guess
 
-# Modèle ADNLS et résolution ipopt
+# Modèle ADNLS et résolution lbfgs
 nlps_red = ADNLSModel(F, x0, m)
-stats_sred = ipopt(nlps_red)
+stats_sred = lbfgs(nlps_red)
 print(stats_sred.solution)
 
-# Modèle ADNLP et résolution ipopt
-nlpp_red = ADNLPModel(f, x0)
-stats_pred = ipopt(nlpp_red)
+# Modèle ADNLP et résolution lbfgs
+nlpp_red = ADNLPModel(f, x0; constraints=Dict("C1" => λ -> abs(A * λ - b) <= A * λ - b)) # with constraint
+# nlpp_red = ADNLPModel(f, x0) # without constraint
+stats_pred = lbfgs(nlpp_red)
 print(stats_pred.solution)
 
 # Représentation graphique des données de température vs les courbes obtenues
